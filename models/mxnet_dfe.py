@@ -26,6 +26,7 @@ if dfe=="inception_21k":
   model_dir = "./inception_21k"
   prefix = "./inception_21k/Inception"
   num_round = 9
+  mean_img = 117, 117, 117
 
 def load_model(model_dir, prefix, num_round=39, batchsize=1):
   model = mx.model.FeedForward.load(prefix, num_round, ctx=mx.gpu(), numpy_batch_size=batchsize)
