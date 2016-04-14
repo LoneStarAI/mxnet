@@ -3,6 +3,8 @@
 ##########
 # Environment variables:
 # CUDA_PATH: set to build with cuda at particular location
+# TEST_GPU: set to run gpu unittest
+# PLATFORM: platform name of the final artifact, optional
 # BUILD_NUMBER: the build number of the final artifact
 ##########
 
@@ -83,6 +85,9 @@ fi
 set -x
 cp -r python/mxnet ${TARGET_DIR}/python/
 cp -r lib/libmxnet.${dll_ext} ${TARGET_DIR}/python/${LIB_NAME}.${dll_ext}
+if [[ $OSTYPE == linux* ]]; then
+  strip -s ${TARGET_DIR}/python/${LIB_NAME}.${dll_ext}
+fi
 set +x
 echo "====================================="
 }
@@ -92,12 +97,14 @@ function package {
 echo "============= Package =============="
 echo "Build number: $BUILD_NUMBER"
 
-if [[ $OSTYPE == linux* ]]; then
-  PLATFORM='linux'
-elif [[ $OSTYPE == darwin* ]]; then
-  PLATFORM='mac'
-elif [[ $OSTYPE == msys ]]; then
-  PLATFORM='windows'
+if [[ -z ${PLATFORM} ]]; then
+  if [[ $OSTYPE == linux* ]]; then
+    PLATFORM='linux'
+  elif [[ $OSTYPE == darwin* ]]; then
+    PLATFORM='mac'
+  elif [[ $OSTYPE == msys ]]; then
+    PLATFORM='windows'
+  fi
 fi
 
 TARGET_DIR=${WORKSPACE}/target
@@ -123,13 +130,14 @@ unittest
 LIB_NAME='libmxnet'
 copy_artifact
 
-## CUDA build ##
+## GPU build ##
 if [[ ! -z "$CUDA_PATH" ]]; then
   build_with_cuda
-  unittest_with_cuda
+  if [[ ! -z "$TEST_GPU" ]]; then
+    unittest_with_cuda
+  fi
   LIB_NAME='libmxnet.cuda'
   copy_artifact
 fi
 
-## Package everything into tarball
 package
